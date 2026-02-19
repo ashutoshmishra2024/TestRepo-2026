@@ -1,1 +1,12 @@
+# GitHub Actions, the on: section defines which events will trigger your workflow. The three you’re using are:
 
+# push — runs when commits are pushed to the repository (branches or tags). Triggers when new commits are pushed.
+# pull_request — runs when pull requests are opened/updated/closed (targeting specific base branches).
+# workflow_dispatch — allows manual runs from the GitHub UI or via API, optionally with user-provided inputs.
+
+# list of trigger types
+#Manual               workflow_dispatch
+#Scheduled            schedule 
+#Code-related         push, pull_request, create
+#Repo management      issues, labels, release
+#Security             dependabot, dependency_review
