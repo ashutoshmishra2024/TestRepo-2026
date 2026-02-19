@@ -33,7 +33,6 @@ on:
       - release/*
 # Note:-
 #This runs when a PR’s base branch is main or release/*.
-#To filter by the source branch (the head), use the if: condition
 
 # 3) Trigger on tags (e.g., for releases)
 on:
