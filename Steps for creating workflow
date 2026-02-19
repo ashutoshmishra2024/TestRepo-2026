@@ -1,0 +1,10 @@
+# CI/CD Flow After Configuring env Variables
+    Step                                        Purpose
+1. Set environment variables           Workflow, job, or step level
+2. Checkout repository                 actions/checkout
+3. Install dependencies                npm, maven, pip, gradle, etc.
+4. Run tests                           unit, integration
+5. Build your project                  create artifacts (build output)
+6. Use env vars for configuration      API keys, URLs, versions
+7. Deploy based on environments        dev/stage/prod
+8. Notify / upload artifacts           Slack, Teams, artifact upload
