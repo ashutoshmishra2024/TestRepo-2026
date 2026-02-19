@@ -1,0 +1,43 @@
+# define the branch in github action for CICD ?
+# Reasoning completed in 1 step
+# You control which branches trigger a GitHub Actions workflow (or specific jobs/steps) using event filters like on.push.branches, on.pull_request.branches, and with conditional checks like if: github.ref == 'refs/heads/main'.
+#
+# Below are the most common patterns—with ready-to-copy snippets and when to use each.
+
+# 1) Trigger on pushes to specific branches
+name: CI
+
+on:
+  push:
+    branches:
+      - main           # exactly 'main'
+      - develop        # exactly 'develop'
+      - release/*      # any branch under 'release/'
+      - 'feature/**'   # nested wildcard
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # ...
+# Note: This triggers whenever code is pushed to those branches.
+
+# 2) Trigger on pull requests targeting specific branches
+
+name: PR Checks
+on:
+  pull_request:
+    branches:
+      - main
+      - release/*
+# Note:-
+#This runs when a PR’s base branch is main or release/*.
+#To filter by the source branch (the head), use the if: condition
+
+# 3) Trigger on tags (e.g., for releases)
+on:
+  push:
+    tags:
+      - 'v*'       # v1.0.0, v2.3.4, etc.
+      - 'release-*'
