@@ -1,0 +1,89 @@
+How to configure environement variable
+Configuring environment variables in GitHub Actions can be done in 5 different ways, depending on where you want the variables to be used (workflow‑level, job‑level, step‑level, secrets, or environment files).
+
+✅ 1. Define Environment Variables at Workflow Level
+These variables are available to all jobs in the workflow.
+  
+name: CI/CD
+on: [push]
+env:
+  NODE_ENV: production
+  APP_NAME: myapp
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "App: $APP_NAME, Environment: $NODE_ENV"
+        
+✅ 2. Define Environment Variables per Job
+Available only inside one job.
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      BUILD_ENV: staging
+
+    steps:
+      - run: echo "Build environment: $BUILD_ENV"
+        
+✅ 3. Define Environment Variables per Step
+Only available inside that step.
+steps:
+  - name: Step-level env var
+    env:
+      GREETING: "Hello World"
+    run: echo $GREETING
+      
+✅ 4. Use GitHub Secrets as Environment Variables (Recommended for sensitive data)
+Store values in:
+GitHub → Settings → Secrets and variables → Actions → New repository secret
+
+env:
+  API_KEY: ${{ secrets.API_KEY }}
+
+steps:
+  - run: echo "Using secret"
+    env:
+      KEY: ${{ secrets.MY_SECRET }}
+
+✅ 5. Set Environment Variables Dynamically (Using env files)
+You can write environment variables to the GitHub Actions runtime env file:
+steps:
+  - name: Set dynamic env var
+    run: echo "VERSION=1.2.3" >> $GITHUB_ENV
+
+  - name: Use dynamic env var
+    run: echo "Version is $VERSION"
+This is useful when you need to:
+
+Capture output from a command
+Pass values between steps
+Build versioning dynamically
+  
+6. Matrix Environment Variables
+Useful for running multiple combinations (Node versions, OS, etc.)
+strategy:
+  matrix:
+    node-version: [14, 16, 18]
+
+steps:
+  - run: echo "Node version: ${{ matrix.node-version }}"
+    
+7. Use vars instead of secrets for non-sensitive repository variables
+GitHub has "Variables" (not secrets) for plain non-sensitive values.
+
+Save them in:
+
+Settings → Secrets and variables → Variables
+
+Use them in workflow:
+
+steps:
+  - run: echo "Environment: ${{ vars.ENV_NAME }}"
+    
+env: (workflow)	  Global variables for all jobs
+Job-level env	    Variables used only inside one job
+Step-level env	  Temporary or local variables
+${{ secrets.X }}	API keys, passwords, tokens
+$GITHUB_ENV	      Dynamic values generated during workflow
+${{ vars.X }}	    Non-secure repository config
