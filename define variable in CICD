@@ -1,5 +1,6 @@
 How to configure environement variable
-Configuring environment variables in GitHub Actions can be done in 5 different ways, depending on where you want the variables to be used (workflow‑level, job‑level, step‑level, secrets, or environment files).
+Configuring environment variables in GitHub Actions can be done in 5 different ways, depending on where you want the variables to be used 
+(workflow‑level, job‑level, step‑level, secrets, or environment files).
 
 ✅ 1. Define Environment Variables at Workflow Level
 These variables are available to all jobs in the workflow.
