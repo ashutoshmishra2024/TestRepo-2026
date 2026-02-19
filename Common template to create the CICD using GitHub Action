@@ -1,0 +1,141 @@
+#  A step is a single task inside a job. Steps run sequentially within a job and can:
+#
+# run shell commands with run
+# call a reusable action with uses
+# pass data between steps via id and outputs
+# be conditionally executed with if
+# access secrets, env, and working-directory
+
+#End‑to‑end CI/CD example (Build → Test → Scan → Package → Push → Deploy)
+
+name: CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  ci:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # 1) Checkout code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2) Set up language/runtime (example: Node.js)
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      # 3) Install dependencies
+      - name: Install deps
+        run: npm ci
+
+      # 4) Lint
+      - name: Lint
+        run: npm run lint --if-present
+
+      # 5) Unit tests with coverage
+      - name: Test
+        run: npm test -- --ci --reporter=junit --coverage
+        env:
+          CI: true
+
+      # 6) Upload test results (optional)
+      - name: Upload JUnit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-report
+          path: reports/junit/*.xml
+          if-no-files-found: ignore
+
+      # 7) Cache build artifacts (optional; adjust to your toolchain)
+      - name: Build app
+        run: npm run build
+
+  package:
+    name: Build & Push Image
+    runs-on: ubuntu-latest
+    needs: ci
+    permissions:
+      contents: read
+      packages: write
+      id-token: write   # required for OIDC auth to cloud, if used
+    env:
+      IMAGE_TAG: ${{ github.sha }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 1) Log in to GHCR (or your registry)
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 2) Set up Buildx
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 3) Build & push the image
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 4) Expose the image URI as an output for deployment
+      - name: Set image output
+        id: image
+        run: echo "image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    name: Deploy to Prod
+    runs-on: ubuntu-latest
+    needs: package
+    environment:
+      name: production
+      url: https://yourapp.example.com
+    steps:
+      - name: Checkout infra repo (if GitOps)
+        uses: actions/checkout@v4
+        with:
+          repository: your-org/infra
+          token: ${{ secrets.PAT_REPO }}
+          ref: main
+
+      # Example: Update Kubernetes manifest image tag (GitOps style)
+      - name: Update image tag
+        run: |
+          yq -i '.spec.template.spec.containers[0].image = "${{ needs.package.outputs.image }}"' k8s/deploy.yaml
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git commit -am "chore: deploy ${{ needs.package.outputs.image }}"
+          git push
+
+# Notes:-
+# Swap Node.js for Java, Python, .NET, Go, etc. by replacing the setup and build steps.
+# If you deploy directly (not GitOps), replace the deploy steps with your cloud CLI (e.g., kubectl, helm, az, aws, gcloud) and authenticate via OIDC or secrets.
