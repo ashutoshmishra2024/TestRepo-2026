@@ -1,0 +1,51 @@
+name: Build and Publish Docker Image
+on:
+ push:
+   branches:
+     - main
+env:
+ REGISTRY: ghcr.io
+ IMAGE_NAME: ${{ github.repository }}
+jobs:
+ build-and-push:
+   runs-on: ubuntu-latest
+   permissions:
+     contents: read
+     packages: write
+     id-token: write
+   steps:
+     - name: Checkout Repository
+       uses: actions/checkout@v4
+     - name: Log in to GitHub Container Registry
+       uses: docker/login-action@v2
+       with:
+         registry: ${{ env.REGISTRY }}
+         username: ${{ github.actor }}
+         password: ${{ secrets.GITHUB_TOKEN }}
+     - name: Extract Metadata for Docker
+       id: meta
+       uses: docker/metadata-action@v4
+       with:
+         images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+     - name: Build and Push Docker Image
+       uses: docker/build-push-action@v5
+       with:
+         context:
+         push: true
+         tags: ${{ steps.meta.outputs.tags }}
+         labels: ${{ steps.meta.outputs.labels }}
+
+#====Notes==========
+# Step 4: Configure Secrets
+# No additional secrets are required for GitHub Container Registry.
+
+#Step 5: Trigger the Workflow
+#Push changes to the main branch or any branch specified in the workflow.
+#The workflow will automatically build and push the Docker image to ghcr.io.
+
+#Best Practices
+#Use meaningful tags (e.g., latest, version numbers) for your images.
+#Pin action versions (e.g., @v4) to ensure stability.
+#Regularly review and update your workflow for security and performance improvements.
+
+#This setup ensures seamless integration of Docker image building and publishing into your CI/CD pipeline.
