@@ -1,1 +1,15 @@
+name: CICD for docker build
 
+On: 
+  push:
+    branched:
+        -main
+
+env: 
+  registry:
+  ImageName: 
+
+jobs:
+  build & push repository:
+   runs-on:
+   permission:
