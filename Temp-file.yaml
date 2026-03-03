@@ -13,3 +13,25 @@ jobs:
   build & push repository:
    runs-on:
    permission:
+
+steps:
+- name: checkout tepositoy
+uses: actions/checkout@4
+
+- name: Login Gitbub container registry
+uses: docker/login@v2
+  with:
+    registry:
+    username:
+    password:
+
+  - name: Build the docker file
+   uses: Build the docker imaged
+   Run: |
+       docker build -t myapp:latest T
+
+  - name: Push the docker image
+    run: |
+      docker tag myapp-latest dockerhub/myapp-lates:latest
+      docker push dockerhub-latest/mypp/latest
+    
